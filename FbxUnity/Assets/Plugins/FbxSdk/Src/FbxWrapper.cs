@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.GLEx;
+using System.Linq;
 
 namespace FbxNet
 {
@@ -239,7 +240,7 @@ namespace FbxNet
             return name;
         }
 
-        public static List<GameObject> Load(string p_path, string p_textureDirectory)
+        public static List<GameObject> Load(string p_path, string p_textureDirectory = null, bool p_isIncludeRoot = false)
         {
             if (!System.IO.File.Exists(p_path))
             {
@@ -264,6 +265,21 @@ namespace FbxNet
 
             FbxInterface.Destroy(pGameObject);
 
+            if (p_isIncludeRoot)
+            {
+                GameObject root = new GameObject("roor_node");
+                root.transform.localPosition = Vector3.zero;
+                root.transform.rotation = Quaternion.identity;
+                root.transform.localScale = Vector3.one;
+                foreach (var item in gameObjects)
+                {
+                    item.transform.SetParent(root.transform);
+                }
+
+                gameObjects.Clear();
+                gameObjects.Add(root);
+            }
+
             return gameObjects;
         }
 
@@ -277,9 +293,8 @@ namespace FbxNet
             }
             Matrix4x4 matrix4X4 = GetGeometryMatrix(pGameObject);
             AttatchTransform(pGameObject, gameObject);
-            AttachMesh(pGameObject, gameObject, matrix4X4);
-            AttachRender(pGameObject, gameObject, p_directory);
-
+            Material[] materials = GetMaterials(pGameObject, p_directory);
+            AttachMesh(pGameObject, gameObject, matrix4X4, materials);
             int mChildrenCount = FbxInterface.GetChildrenCount(pGameObject);
             for (int i = 0; i < mChildrenCount; i++)
             {
@@ -315,7 +330,28 @@ namespace FbxNet
             p_gameObject.transform.localScale = transform.mScale.ToVector3();
         }
 
-        static void AttachMesh(IntPtr pGameObject, GameObject p_gameObject, Matrix4x4 p_matrix)
+        static Material[] GetMaterials(IntPtr pGameObject, string p_directory)
+        {
+            IntPtr render = FbxInterface.GetRender(pGameObject);
+            int materialCount = FbxInterface.GetMaterialCount(render);
+            if (materialCount == 0)
+            {
+                return null;
+            }
+            else
+            {
+                List<Material> materials = new List<Material>();
+                for (int i = 0; i < materialCount; i++)
+                {
+                    MaterialData material = new MaterialData();
+                    FbxInterface.GetMaterial(render, i, ref material);
+                    materials.Add(material.ToMaterial(p_directory));
+                }
+                return materials.ToArray();
+            }
+        }
+
+        static void AttachMesh(IntPtr pGameObject, GameObject p_gameObject, Matrix4x4 p_matrix, Material[] p_materials)
         {
             IntPtr pMesh = FbxInterface.GetMesh(pGameObject);
             int polygonCount = FbxInterface.GetPolygonCount(pMesh);
@@ -331,32 +367,74 @@ namespace FbxNet
                     FbxInterface.GetPolygon(pMesh, i, ref polygon);
                     polygons.Add(polygon.ToPolygon(p_matrix));
                 }
-                Mesh mesh = Polygon3.GenerateMesh(polygons);
-                mesh.RecalculateBounds();
-                mesh.RecalculateNormals();
-                mesh.RecalculateTangents();
-                p_gameObject.AddComponent<MeshFilter>().mesh = mesh;
-            }
-        }
-
-        static void AttachRender(IntPtr pGameObject, GameObject p_gameObjec, string p_directory)
-        {
-            IntPtr render = FbxInterface.GetRender(pGameObject);
-            int materialCount = FbxInterface.GetMaterialCount(render);
-            if (materialCount == 0)
-            {
-            }
-            else
-            {
-                List<Material> materials = new List<Material>();
-                for (int i = 0; i < materialCount; i++)
+                // 计算polygon会出现多少个三角面，如果超过6w5就需要进行切割
+                int vertexCount = 0;
+                foreach (var item in polygons)
                 {
-                    MaterialData material = new MaterialData();
-                    FbxInterface.GetMaterial(render, i, ref material);
-                    materials.Add(material.ToMaterial(p_directory));
+                    vertexCount += (item.Vertices.Length - 2) * 3;
                 }
+                if (vertexCount < 65000)
+                {
+                    Mesh mesh = Polygon3.GenerateMesh(polygons);
+                    mesh.RecalculateBounds();
+                    mesh.RecalculateNormals();
+                    mesh.RecalculateTangents();
+                    p_gameObject.AddComponent<MeshFilter>().mesh = mesh;
+                    p_gameObject.AddComponent<MeshRenderer>().materials = p_materials;
+                }
+                else
+                {
+                    int gameObjectIndex = 0;
+                    vertexCount = 0;
+                    List<Polygon3> polygonsTemp = new List<Polygon3>();
+                    GameObject root = new GameObject("self_mesh");
+                    root.transform.SetParent(p_gameObject.transform);
+                    root.transform.localPosition = Vector3.zero;
+                    root.transform.rotation = Quaternion.identity;
+                    root.transform.localScale = Vector3.one;
 
-                p_gameObjec.AddComponent<MeshRenderer>().materials = materials.ToArray();
+                    foreach (var item in polygons)
+                    {
+                        if (vertexCount + (item.Vertices.Length - 2) * 3 > 65000)
+                        {
+                            GameObject subGameObject = new GameObject(gameObjectIndex.ToString());
+                            subGameObject.transform.SetParent(root.transform);
+                            subGameObject.transform.localPosition = Vector3.zero;
+                            subGameObject.transform.rotation = Quaternion.identity;
+                            subGameObject.transform.localScale = Vector3.one;
+
+                            Mesh mesh = Polygon3.GenerateMesh(polygonsTemp);
+                            mesh.RecalculateBounds();
+                            mesh.RecalculateNormals();
+                            mesh.RecalculateTangents();
+                            subGameObject.AddComponent<MeshFilter>().mesh = mesh;
+                            subGameObject.AddComponent<MeshRenderer>().materials = p_materials;
+
+                            polygonsTemp.Clear();
+                            vertexCount = 0;
+                            gameObjectIndex++;
+                        }
+
+                        vertexCount += (item.Vertices.Length - 2) * 3;
+                        polygonsTemp.Add(item);
+                    }
+
+                    if (polygonsTemp.Count != 0)// 最后一组数据
+                    {
+                        GameObject subGameObject = new GameObject(gameObjectIndex.ToString());
+                        subGameObject.transform.SetParent(root.transform);
+                        subGameObject.transform.localPosition = Vector3.zero;
+                        subGameObject.transform.rotation = Quaternion.identity;
+                        subGameObject.transform.localScale = Vector3.one;
+
+                        Mesh mesh = Polygon3.GenerateMesh(polygonsTemp);
+                        mesh.RecalculateBounds();
+                        mesh.RecalculateNormals();
+                        mesh.RecalculateTangents();
+                        subGameObject.AddComponent<MeshFilter>().mesh = mesh;
+                        subGameObject.AddComponent<MeshRenderer>().materials = p_materials;
+                    }
+                }
             }
         }
 
