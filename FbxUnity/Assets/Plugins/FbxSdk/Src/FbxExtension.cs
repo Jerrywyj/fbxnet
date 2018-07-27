@@ -9,6 +9,42 @@ namespace FbxNet
 {
     public static class FbxExtension
     {
+        public static string GetName(this TextureData p_data)
+        {
+            return System.Text.Encoding.GetEncoding("GBK").GetString(p_data.mName, 0, p_data.mNameLength);
+        }
+
+        public static void SetName(this TextureData p_data, string p_name)
+        {
+            int length = System.Text.Encoding.GetEncoding("GBK").GetByteCount(p_name);
+            Buffer.BlockCopy(System.Text.Encoding.GetEncoding("GBK").GetBytes(p_name), 0, p_data.mName, 0, length);
+            p_data.mNameLength = length;
+        }
+
+        public static string GetRelativePath(this TextureData p_data)
+        {
+            return System.Text.Encoding.GetEncoding("GBK").GetString(p_data.mRelativePath, 0, p_data.mRelativePathLength);
+        }
+
+        public static void SetRelativePath(this TextureData p_data, string p_path)
+        {
+            int length = System.Text.Encoding.GetEncoding("GBK").GetByteCount(p_path);
+            Buffer.BlockCopy(System.Text.Encoding.GetEncoding("GBK").GetBytes(p_path), 0, p_data.mRelativePath, 0, length);
+            p_data.mRelativePathLength = length;
+        }
+
+        public static string GetName(this MaterialData p_data)
+        {
+            return System.Text.Encoding.GetEncoding("GBK").GetString(p_data.mName, 0, p_data.mNameLength);
+        }
+
+        public static void SetName(this MaterialData p_data, string p_name)
+        {
+            int length = System.Text.Encoding.GetEncoding("GBK").GetByteCount(p_name);
+            Buffer.BlockCopy(System.Text.Encoding.GetEncoding("GBK").GetBytes(p_name), 0, p_data.mName, 0, length);
+            p_data.mNameLength = length;
+        }
+
         public static Vector2 ToVector2(this Vector2Data p_data)
         {
             return new Vector2(p_data.mX, p_data.mY);
@@ -75,19 +111,30 @@ namespace FbxNet
 
         public static Texture2D GetTexture(this TextureData p_data, string p_directory, bool p_isNormal = false)
         {
-            string path = string.Format("{0}\\{1}", p_directory, p_data.mRelativePath);
-            byte[] buffer = System.IO.File.ReadAllBytes(path);
-            System.IO.FileInfo file = new System.IO.FileInfo(path);
-            
-            Texture2D texture = new Texture2D(1, 1, TextureFormat.RGB24, true);
-            texture.LoadImage(buffer);
-            if (p_isNormal)
+            string path = string.Format("{0}\\{1}", p_directory, p_data.GetRelativePath());
+            if (!System.IO.File.Exists(path))
             {
-                return texture.ToNormalMap();
+                return null;
             }
-            else
+            try
             {
-                return texture;
+                byte[] buffer = System.IO.File.ReadAllBytes(path);
+                System.IO.FileInfo file = new System.IO.FileInfo(path);
+
+                Texture2D texture = new Texture2D(1, 1, TextureFormat.RGB24, true);
+                texture.LoadImage(buffer);
+                if (p_isNormal)
+                {
+                    return texture.ToNormalMap();
+                }
+                else
+                {
+                    return texture;
+                }
+            }
+            catch
+            {
+                return null;
             }
         }
 
@@ -106,7 +153,7 @@ namespace FbxNet
         public static Material ToMaterial(this MaterialData p_data, string p_directory)
         {
             Material material = new Material(Shader.Find("Standard"));
-            material.name = p_data.mName;
+            material.name = p_data.GetName();
             material.SetColor("_Color", p_data.mDiffuse.ToColor());
             if (p_data.pDiffuseTexture != IntPtr.Zero)
             {
@@ -125,7 +172,6 @@ namespace FbxNet
 
                 FbxInterface.GetTexture(p_data.pNormalTexture, ref texture);
                 material.SetTexture("_BumpMap", texture.GetTexture(p_directory, true));
-              
             }
 
 

@@ -90,10 +90,11 @@ FbxTexture* Texture::GetFbxTexture(FbxScene* const pscene)
 
 void Texture::CopyFromTextureData(const TextureData * const pdata)
 {
-	char buffer[1024];
-	memset(buffer, 0, sizeof(buffer));
-	strcpy(buffer, pdata->mName);
-	mName = buffer;
+	mName = pdata->mName;
+	//char buffer[1024];
+	//memset(buffer, 0, sizeof(buffer));
+	//strcpy(buffer, pdata->mName);
+	//mName = UTF82Std(pdata->mName, pdata->mNameLength);
 	//char buffer[1024];
 	//memset(buffer, 0, 1024);
 	//memcpy(buffer, pdata->mName, pdata->mNameLength);
@@ -106,28 +107,31 @@ void Texture::CopyFromTextureData(const TextureData * const pdata)
 	//memset(buffer, 0, 1024);
 	//memcpy(buffer, pdata->mRelativePath, pdata->mRelativePathLength);
 	//mRelativePath = buffer;
-	memset(buffer, 0, sizeof(buffer));
-	strcpy(buffer, pdata->mRelativePath);
-	mRelativePath = buffer;
-
+	//memset(buffer, 0, sizeof(buffer));
+	//strcpy(buffer, pdata->mRelativePath);
+	//mRelativePath = buffer;
+	//mRelativePath = UTF82Std(pdata->mRelativePath, pdata->mRelativePathLength);
+	mRelativePath = pdata->mRelativePath;
 }
 
 void Texture::CopyToTextureData(TextureData * const pdata)
 {
-	//pdata->mNameLength = mName.length();
-	memset(pdata->mName, 0, sizeof(pdata->mName));
+	pdata->mNameLength = mName.length();
+	//memset(pdata->mName, 0, sizeof(pdata->mName));
 	strcpy(pdata->mName, mName.c_str());
-	//memcpy(pdata->mName, mName.c_str(), mName.length());
+	//size_t nameCapcity = sizeof(pdata->mName);
+	//pdata->mNameLength = Std2UTF8(mName, pdata->mName, nameCapcity);
+
 	pdata->mTextureType = pdata->mTextureType;
 	pdata->mSwapUV = pdata->mSwapUV;
 	mTranslation.CopyFromVector2Data(&pdata->mTranslation);
 	mScale.CopyFromVector2Data(&pdata->mScale);
 	mRotation.CopyFromVector3Data(&pdata->mRotation);
-	//pdata->mRelativePathLength = mRelativePath.length();
+	pdata->mRelativePathLength = mRelativePath.length();
 	memset(pdata->mRelativePath, 0, sizeof(pdata->mRelativePath));
-	//memcpy(pdata->mRelativePath, mRelativePath.c_str(), mRelativePath.length());
 	strcpy(pdata->mRelativePath, mRelativePath.c_str());
-
+	//size_t pathCapcity = sizeof(pdata->mRelativePath);
+	//pdata->mRelativePathLength = Std2UTF8(mRelativePath, pdata->mRelativePath, pathCapcity);
 }
 
 TextureData Texture::GetTextureData()

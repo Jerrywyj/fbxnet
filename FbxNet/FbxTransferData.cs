@@ -42,15 +42,17 @@ namespace FbxNet
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct TextureData
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst =1024)]
-        public string mName;
+        public int mNameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mName;
         public int mTextureType;
         public bool mSwapUV;
         public Vector2Data mTranslation;
         public Vector2Data mScale;
         public Vector3Data mRotation;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        public string mRelativePath;
+        public int mRelativePathLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mRelativePath;
     };
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
@@ -88,8 +90,9 @@ namespace FbxNet
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct MaterialData
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        public string mName;
+        public int mNameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mName;
         public int mShaderType;// 0 Phong， 1 Lambert
         public ColorData mAmbient;
         public float mAmbientFactor;
@@ -115,7 +118,6 @@ namespace FbxNet
         public float mBumpFactor;
         public IntPtr pBumpTexture;
     };
-
     public static class FbxInterface
     {
 
@@ -123,15 +125,22 @@ namespace FbxNet
         {
             byte[] data = new byte[2048];
             int count = FbxInterface.GetGameObjectName(pgameobject, data);
-            string name = System.Text.Encoding.Default.GetString(data, 0, count);
+            string name = System.Text.Encoding.GetEncoding("GBK").GetString(data, 0, count);
             return name;
         }
 
-        [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr LoadGameObject(string ptah);
+        public static IntPtr LoadGameObject(string path)
+        {
+            byte[] buffer = System.Text.Encoding.GetEncoding("GBK").GetBytes(path);
+            return LoadGameObject(buffer);
+        }
+
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SaveGameObejct(IntPtr pgameobject, string name);
+        public static extern IntPtr LoadGameObject(byte[] ptah);
+
+        [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SaveGameObejct(IntPtr pgameobject, byte[] name);
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateGameObject();
@@ -140,7 +149,7 @@ namespace FbxNet
         public static extern int GetGameObjectName(IntPtr pgameobject, byte[] name);
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SetGameObjectName(IntPtr pgameobject, string name);
+        public static extern void SetGameObjectName(IntPtr pgameobject, byte[] ptah, int length);
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern int GetChildrenCount(IntPtr pgameobject);
@@ -197,7 +206,7 @@ namespace FbxNet
         public static extern void SetMaterial(IntPtr prender, int mertialIndex, MaterialData materialdata);
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void GetTexture(IntPtr ptexture,ref TextureData texturedata);
+        public static extern void GetTexture(IntPtr ptexture, ref TextureData texturedata);
 
         [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
         public static extern void SetTexture(IntPtr ptexture, TextureData texturedata);

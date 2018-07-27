@@ -36,7 +36,7 @@ void GameObject::Load(std::string strPath)
 
 	Load(pScene->GetRootNode());
 	FbxGlobalSettings& globalSetting = pScene->GetGlobalSettings();
-	 globalSetting.GetOriginalUpAxis();
+	globalSetting.GetOriginalUpAxis();
 
 
 	pManager->Destroy();

@@ -345,12 +345,14 @@ FbxSurfaceMaterial* Material::GeFbxMaterial(FbxScene* pScene)
 
 void Material::CopyFromMaterialData(const MaterialData * const pdata)
 {
-	char buffer[1024];
+	mName = pdata->mName;
+	//char buffer[1024];
 	//memset(buffer, 0, 1024);
 	//memcpy(buffer, pdata->mName, pdata->mNameLength);
 	//mName = buffer;
-	strcpy(buffer, pdata->mName);
-	mName = buffer;
+	//strcpy(buffer, pdata->mName);
+	//mName = buffer;
+	//mName = UTF82Std(pdata->mName, pdata->mNameLength);
 	mShaderType = pdata->mShaderType;
 	mAmbient.CopyFromColorData(&pdata->mAmbient);
 	mAmbientFactor = pdata->mAmbientFactor;
@@ -379,10 +381,12 @@ void Material::CopyFromMaterialData(const MaterialData * const pdata)
 
 void Material::CopyToMaterialData(MaterialData * const pdata)
 {
-	//pdata->mNameLength = mName.length();
+	pdata->mNameLength = mName.length();
 	//memset(pdata->mName, 0, sizeof(pdata->mName));
 	//memcpy(pdata->mName, mName.c_str(), mName.length());
 	strcpy(pdata->mName, mName.c_str());
+	//size_t nameCapcity = sizeof(pdata->mName);
+	//pdata->mNameLength = Std2UTF8(mName, pdata->mName, nameCapcity);
 	pdata->mShaderType = mShaderType;
 	mAmbient.CopyToColorData(&pdata->mAmbient);
 	pdata->mAmbientFactor = mAmbientFactor;

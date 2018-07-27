@@ -140,7 +140,7 @@ public class FbxTestLogout : MonoBehaviour {
                 {
                     TextureData texture = new TextureData();
                     FbxInterface.GetTexture(material.pDiffuseTexture, ref texture);
-                    Debug.LogFormat("diffuse texture {0}", texture.mRelativePath);
+                    Debug.LogFormat("diffuse texture {0}", texture.GetRelativePath());
                 }
             }
         }

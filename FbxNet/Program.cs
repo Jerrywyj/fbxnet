@@ -10,7 +10,7 @@ namespace FbxNet
     {
         static void Main(string[] args)
         {
-            IntPtr pGameObject = FbxInterface.LoadGameObject(@"..\..\ces.FBX");
+            IntPtr pGameObject = FbxInterface.LoadGameObject(@"..\..\测试-5\CZ-5.FBX");
             PrintGameObject(pGameObject);
             FbxInterface.Destroy(pGameObject);
 
@@ -146,7 +146,7 @@ namespace FbxNet
                     {
                         TextureData texture = new TextureData();
                         FbxInterface.GetTexture(material.pDiffuseTexture, ref texture);
-                        string name = texture.mRelativePath;
+                        string name = System.Text.Encoding.GetEncoding("GBK").GetString(texture.mName, 0, texture.mNameLength);
                         Console.WriteLine("diffuse texture {0}", name);
                     }
                 }

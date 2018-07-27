@@ -3,9 +3,9 @@
 #include"data.h"
 
 
-extern "C" _declspec(dllexport) void* LoadGameObject(char* pname);
+extern "C" _declspec(dllexport) void* LoadGameObject(char* path);
 extern "C" _declspec(dllexport) void* CreateGameObject();
-extern "C" _declspec(dllexport) void SaveGameObejct(void* pgameobject, char* pname);
+extern "C" _declspec(dllexport) void SaveGameObejct(void* pgameobject, char* path);
 
 extern "C" _declspec(dllexport) const int GetGameObjectName(void* pgameobject, char* pname);
 extern "C" _declspec(dllexport) void SetGameObjectName(void* pgameobject, char* pname);
@@ -46,3 +46,4 @@ extern "C" _declspec(dllexport) void SetTexture(void* ptexture, TextureData text
 extern "C" _declspec(dllexport) void* CreateTexture();
 
 extern "C" _declspec(dllexport) void Destroy(void* pgameobject);
+

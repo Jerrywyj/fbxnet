@@ -43,15 +43,17 @@ namespace FbxNet
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct TextureData
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        public string mName;
+        public int mNameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mName;
         public int mTextureType;
         public bool mSwapUV;
         public Vector2Data mTranslation;
         public Vector2Data mScale;
         public Vector3Data mRotation;
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        public string mRelativePath;
+        public int mRelativePathLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mRelativePath;
     };
 
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
@@ -89,8 +91,9 @@ namespace FbxNet
     [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Ansi, Pack = 4)]
     public struct MaterialData
     {
-        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 1024)]
-        public string mName;
+        public int mNameLength;
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1024)]
+        public byte[] mName;
         public int mShaderType;// 0 Phong， 1 Lambert
         public ColorData mAmbient;
         public float mAmbientFactor;
@@ -119,13 +122,29 @@ namespace FbxNet
 
     public static class FbxInterface
     {
+        //public static string GetGameObjectName(IntPtr pgameobject)
+        //{
+        //    byte[] data = new byte[2048];
+        //    int count = FbxInterface.GetGameObjectName(pgameobject, data);
+        //    string name = System.Text.Encoding.Default.GetString(data, 0, count);
+        //    return name;
+        //}
+
+        public static IntPtr LoadGameObject(string path)
+        {
+            byte[] buffer = System.Text.Encoding.GetEncoding("GBK").GetBytes(path);
+            return LoadGameObject(buffer);
+        }
+
+
+
         #region fbxsdkbridge.dll functions
 
-        [DllImport("fbxsdkbridge", CallingConvention = CallingConvention.Cdecl)]
-        public static extern IntPtr LoadGameObject(string ptah);
+        [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern IntPtr LoadGameObject(byte[] ptah);
 
-        [DllImport("fbxsdkbridge", CallingConvention = CallingConvention.Cdecl)]
-        public static extern void SaveGameObejct(IntPtr pgameobject, string name);
+        [DllImport("fbxsdkbridge.dll", CallingConvention = CallingConvention.Cdecl)]
+        public static extern void SaveGameObejct(IntPtr pgameobject, byte[] name);
 
         [DllImport("fbxsdkbridge", CallingConvention = CallingConvention.Cdecl)]
         public static extern IntPtr CreateGameObject();
@@ -220,18 +239,26 @@ namespace FbxNet
             return name;
         }
 
-        public static List<GameObject> Load(string p_path)
+        public static List<GameObject> Load(string p_path, string p_textureDirectory)
         {
+            if (!System.IO.File.Exists(p_path))
+            {
+                return new List<GameObject>();
+            }
+
             IntPtr pGameObject = LoadGameObject(p_path);
-            System.IO.FileInfo fileInfo = new System.IO.FileInfo(p_path);
-            string directory = fileInfo.Directory.ToString();
-            //GameObject gameObject = Load(pGameObject, new System.IO.FileInfo(p_path).Directory.ToString());
+            if (string.IsNullOrEmpty(p_textureDirectory))
+            {
+                System.IO.FileInfo fileInfo = new System.IO.FileInfo(p_path);
+
+                p_textureDirectory = fileInfo.Directory.ToString();
+            }
             List<GameObject> gameObjects = new List<GameObject>();
             int mChildrenCount = FbxInterface.GetChildrenCount(pGameObject);
             for (int i = 0; i < mChildrenCount; i++)
             {
                 IntPtr childGameObject = FbxInterface.GetChild(pGameObject, i);
-                GameObject gameObject = Load(childGameObject, directory);
+                GameObject gameObject = Load(childGameObject, p_textureDirectory);
                 gameObjects.Add(gameObject);
             }
 

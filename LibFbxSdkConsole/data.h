@@ -1,12 +1,5 @@
 #pragma once
 
-//struct StringData
-//{
-//public:
-//	int Size;
-//	unsigned char Data[1024];
-//};
-
 struct Vector2Data
 {
 public:
@@ -42,16 +35,14 @@ public:
 
 struct TextureData
 {
-	//int mNameLength;
-	//char mName[1024];
+	int mNameLength;
 	char mName[1024];
 	int mTextureType;
 	bool mSwapUV;
 	Vector2Data mTranslation;
 	Vector2Data mScale;
 	Vector3Data mRotation;
-	//int mRelativePathLength;
-	//char mRelativePath[1024];
+	int mRelativePathLength;
 	char mRelativePath[1024];
 };
 
@@ -82,6 +73,7 @@ public:
 struct MaterialData
 {
 public:
+	int mNameLength;
 	char mName[1024];
 	int mShaderType;// 0 Phong£¬ 1 Lambert
 	ColorData mAmbient;

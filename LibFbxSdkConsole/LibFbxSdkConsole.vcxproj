@@ -81,8 +81,8 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <TargetName>fbxsdkbridge</TargetName>
-    <OutDir>$(SolutionDir)build\x86</OutDir>
-    <IntDir>x86</IntDir>
+    <OutDir>$(SolutionDir)build\x86\</OutDir>
+    <IntDir>x86\</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>

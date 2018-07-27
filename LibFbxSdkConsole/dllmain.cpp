@@ -1,10 +1,12 @@
 #include "dllmain.h"
-
+#include"common.h"
 
 void* LoadGameObject(char* path)
 {
+	//std::string strpath = UTF82Std(path, length);
+	std::string strpath = path;
 	GameObject* gameobject = new GameObject();
-	gameobject->Load(path);
+	gameobject->Load(strpath);
 
 	return gameobject;
 }
@@ -17,8 +19,10 @@ void* CreateGameObject()
 
 void SaveGameObejct(void* pgameobject, char* path)
 {
+	//std::string strpath = UTF82Std(path, length);
+	std::string strpath = path;
 	GameObject* gameobject = (GameObject*)pgameobject;
-	gameobject->Save(path);
+	gameobject->Save(strpath);
 }
 
 const int GetGameObjectName(void* pgameobject, char* pname)
@@ -140,7 +144,7 @@ void GetPolygon(void* pmesh, int polygonIndex, PolygonData& polygondata)
 	}
 }
 
-extern "C" _declspec(dllexport) void SetPolygon(void* pmesh, int polygonIndex, PolygonData polygondata)
+void SetPolygon(void* pmesh, int polygonIndex, PolygonData polygondata)
 {
 	Mesh* mesh = (Mesh*)pmesh;
 	if (polygonIndex >= 0 && polygonIndex < mesh->mPolygonCount)
